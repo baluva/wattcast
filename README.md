@@ -2,7 +2,7 @@
 
 **Day-ahead forecasting of French electricity demand, running in production and scored every day against RTE's official forecast.**
 
-[Live dashboard](https://huggingface.co/spaces/louey9999/wattcast) · [Data & model state](https://huggingface.co/datasets/louey9999/wattcast-data) · [Daily pipeline](.github/workflows/daily.yml)
+[Live dashboard](https://wattcast.streamlit.app) · [Data & model state](https://huggingface.co/datasets/louey9999/wattcast-data) · [Daily pipeline](.github/workflows/daily.yml)
 
 ![Dashboard](docs/dashboard.png)
 
@@ -74,7 +74,7 @@ flowchart LR
     end
     HF[(Hugging Face dataset<br/>raw · model · outputs)]
     API[FastAPI]
-    DASH[Streamlit dashboard<br/>HF Space]
+    DASH[Streamlit dashboard<br/>Community Cloud]
     RTE & OM & CAL --> ING --> DBT --> SCORE --> DRIFT --> TRAIN --> PRED --> HF
     HF --> API
     HF --> DASH

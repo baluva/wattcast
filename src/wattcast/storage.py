@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 REPO_ID = os.environ.get("WATTCAST_DATA_REPO", "louey9999/wattcast-data")
 # Ce qui est synchronisé. Les instantanés météo live restent : ils prouvent ce que le modèle voyait.
-PATTERNS = ["raw/**", "models/**", "outputs/**"]
+PATTERNS = ["raw/**", "models/**", "outputs/**", "README.md"]
 
 
 def pull() -> None:

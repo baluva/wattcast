@@ -1,7 +1,7 @@
 """WattCast — le duel quotidien contre la prévision RTE.
 
 Autonome : lit les sorties publiées (local `data/outputs/<pays>` ou dataset Hugging Face),
-sans importer le package, pour se déployer tel quel sur un Space.
+sans importer le package, pour se déployer tel quel sur Streamlit Community Cloud.
 """
 
 from __future__ import annotations
