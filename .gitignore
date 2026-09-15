@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+# Données : stockées sur le dataset Hugging Face louey9999/wattcast-data
+data/
+mlruns/
+dbt/target/
+dbt/logs/
+dbt/.user.yml
+.env

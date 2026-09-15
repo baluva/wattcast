@@ -1,0 +1,47 @@
+# Un pays = un fichier. Le code ne connaît aucun pays en dur.
+country: france
+label: France
+timezone: Europe/Paris
+holidays_code: FR
+
+# Pas de temps de la cible (minutes) : la conso consolidée n'existe qu'à la demi-heure.
+freq_minutes: 30
+
+# Protocole de prévision : la veille à 12:00 heure locale, on prédit les 48 pas du lendemain.
+# Seules les données connues à cette heure-là peuvent servir de variables.
+forecast_cutoff_local: "12:00"
+
+# Début de l'historique d'entraînement (2012 est dispo, mais la météo prévue commence en 2021).
+history_start: "2014-01-01"
+# Première journée évaluée contre RTE (le backtest démarre 6 mois avant pour chauffer l'intervalle conformal).
+backtest_start: "2023-01-01"
+
+# Périodes retirées de l'entraînement, avec la raison (affichée dans le README).
+exclude_from_training:
+  - start: "2020-03-15"
+    end: "2020-06-15"
+    reason: "Confinement COVID : consommation hors régime normal"
+
+sources:
+  consumption:
+    kind: odre
+    base_url: https://odre.opendatasoft.com/api/explore/v2.1/catalog/datasets
+    consolidated: eco2mix-national-cons-def
+    realtime: eco2mix-national-tr
+    fields: [date_heure, consommation, prevision_j1, prevision_j]
+  school_holidays:
+    kind: education_gouv
+    url: https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/exports/json
+  weather:
+    kind: open_meteo
+    variables: [temperature_2m, cloud_cover, shortwave_radiation, wind_speed_10m]
+    # Météo pondérée par la population des aires urbaines (INSEE, ordres de grandeur).
+    points:
+      - {name: Paris, lat: 48.857, lon: 2.352, weight: 13.1}
+      - {name: Lyon, lat: 45.764, lon: 4.836, weight: 2.3}
+      - {name: Marseille, lat: 43.296, lon: 5.370, weight: 1.9}
+      - {name: Lille, lat: 50.629, lon: 3.057, weight: 1.5}
+      - {name: Toulouse, lat: 43.605, lon: 1.444, weight: 1.5}
+      - {name: Bordeaux, lat: 44.838, lon: -0.579, weight: 1.4}
+      - {name: Nantes, lat: 47.218, lon: -1.554, weight: 1.0}
+      - {name: Strasbourg, lat: 48.573, lon: 7.752, weight: 0.8}
