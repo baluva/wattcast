@@ -1,0 +1,73 @@
+name: Pipeline quotidien
+
+on:
+  schedule:
+    # 10:00 UTC = 12:00 à Paris en été, 11:00 en hiver : toujours avant la coupure de midi.
+    - cron: "0 10 * * *"
+  workflow_dispatch:
+    inputs:
+      force_train:
+        description: "Forcer l'entraînement d'un challenger"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-pipeline
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PYTHONUTF8: "1"
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      WATTCAST_DATA_REPO: louey9999/wattcast-data
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+
+      - name: Récupérer l'état (données, modèle, sorties)
+        run: uv run python -m wattcast.storage pull
+
+      - name: Ingestion
+        run: uv run wattcast ingest
+
+      - name: dbt build (modèles + tests qualité)
+        working-directory: dbt
+        run: uv run dbt build --profiles-dir .
+
+      - name: Noter les prévisions passées
+        run: uv run wattcast score
+
+      - name: Drift
+        id: drift
+        run: |
+          uv run wattcast drift
+          echo "retrain=$(python -c "import json;print(str(json.load(open('data/outputs/france/drift.json'))['retrain_recommended']).lower())")" >> "$GITHUB_OUTPUT"
+
+      - name: Challenger (le lundi, si drift, ou à la demande)
+        env:
+          FORCE_TRAIN: ${{ inputs.force_train }}
+          DRIFT_RETRAIN: ${{ steps.drift.outputs.retrain }}
+        run: |
+          if [ "$(date -u +%u)" = "1" ] || [ "$DRIFT_RETRAIN" = "true" ] || [ "$FORCE_TRAIN" = "true" ]; then
+            uv run wattcast train
+          else
+            echo "pas de réentraînement aujourd'hui"
+          fi
+
+      - name: Prévision du lendemain
+        run: uv run wattcast predict
+
+      - name: Backtest mensuel (le 1er du mois)
+        if: github.event_name == 'schedule'
+        run: |
+          if [ "$(date -u +%d)" = "01" ]; then uv run wattcast backtest; else echo "pas le 1er du mois"; fi
+
+      - name: Publier l'état
+        if: always()
+        run: uv run python -m wattcast.storage push -m "Pipeline du $(date -u +%F)"
