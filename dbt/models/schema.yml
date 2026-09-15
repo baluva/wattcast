@@ -1,0 +1,53 @@
+version: 2
+
+models:
+  - name: stg_consumption
+    description: Consommation France à la demi-heure, consolidé prioritaire sur le temps réel.
+    columns:
+      - name: ts_utc
+        data_tests: [unique, not_null]
+      - name: consumption_mw
+        description: Consommation réalisée (MW). NULL pour le futur.
+        data_tests:
+          - wattcast_in_range:
+              arguments: {min: 20000, max: 110000}
+      - name: rte_forecast_d1_mw
+        data_tests:
+          - wattcast_in_range:
+              arguments: {min: 20000, max: 110000}
+      - name: source
+        data_tests:
+          - accepted_values:
+              arguments: {values: [consolidated, realtime]}
+
+  - name: stg_calendar
+    columns:
+      - name: day
+        data_tests: [unique, not_null]
+      - name: school_zones_off
+        data_tests:
+          - accepted_values:
+              arguments: {values: [0, 1, 2, 3]}
+
+  - name: fct_weather_national
+    description: Météo horaire pondérée par la population (8 aires urbaines).
+    data_tests:
+      - dbt_utils_unique_combination:
+          arguments: {columns: [view, ts_utc]}
+    columns:
+      - name: temperature_c
+        data_tests:
+          - wattcast_in_range:
+              arguments: {min: -25, max: 45}
+      - name: view
+        data_tests:
+          - accepted_values:
+              arguments: {values: [observed, forecast_d1]}
+
+  - name: mart_halfhourly
+    description: Table de modélisation, grille demi-horaire complète.
+    columns:
+      - name: ts_utc
+        data_tests: [unique, not_null]
+      - name: day_local
+        data_tests: [not_null]

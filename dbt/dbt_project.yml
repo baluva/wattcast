@@ -1,0 +1,22 @@
+name: wattcast
+version: "1.0.0"
+profile: wattcast
+config-version: 2
+
+model-paths: [models]
+test-paths: [tests]
+macro-paths: [macros]
+
+vars:
+  country: france
+  timezone: Europe/Paris
+  history_start: "2014-01-01"
+  # Chemin des Parquet bruts, relatif au dossier dbt/ (surchargé par la CLI si besoin).
+  raw_path: "../data/raw/france"
+
+models:
+  wattcast:
+    staging:
+      +materialized: table
+    marts:
+      +materialized: table

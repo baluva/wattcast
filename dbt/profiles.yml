@@ -1,0 +1,7 @@
+wattcast:
+  target: local
+  outputs:
+    local:
+      type: duckdb
+      path: "{{ env_var('WATTCAST_WAREHOUSE', '../data/warehouse.duckdb') }}"
+      threads: 4
