@@ -89,6 +89,28 @@ def fr(x: float, d: int = 1) -> str:
     return f"{x:,.{d}f}".replace(",", " ").replace(".", ",")
 
 
+JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+MOIS = [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
+]
+
+
+def date_fr(d: pd.Timestamp) -> str:
+    """Pas de dépendance à la locale du serveur (un Space tourne en anglais)."""
+    return f"{JOURS[d.dayofweek].capitalize()} {d.day} {MOIS[d.month - 1]} {d.year}"
+
+
 def layout(fig: go.Figure, height: int = 360, y_title: str = "") -> go.Figure:
     fig.update_layout(
         height=height,
@@ -209,7 +231,7 @@ else:
         )
     fig.update_xaxes(tickformat="%H:%M")
     st.markdown(
-        f'<p class="serif" style="font-size:1.2rem;margin:0">{target:%A %d %B %Y}</p>', unsafe_allow_html=True
+        f'<p class="serif" style="font-size:1.2rem;margin:0">{date_fr(target)}</p>', unsafe_allow_html=True
     )
     st.plotly_chart(layout(fig, 380, "MW"), use_container_width=True, config={"displayModeBar": False})
     peak = day.loc[day["pred"].idxmax()]
@@ -337,6 +359,7 @@ with col_b:
         "temp_d1_mean": "Température de la veille",
         "temp_d2_mean": "Température de J-2",
         "temp_minus_d7": "Écart de température vs J-7",
+        "temp_minus_level": "Écart de température vs semaine de réf.",
         "morning_trend": "Tendance de la matinée",
         "radiation": "Ensoleillement",
         "cloud": "Nébulosité",
@@ -383,9 +406,15 @@ if lm:
         f'<div class="stat"><div class="v">{fr(lm["mape_model"], 2)} % <span style="font-size:1.1rem;color:{INK_2}">vs {fr(lm["mape_rte"], 2)} %</span></div><div class="l">MAPE live, modèle vs RTE ({fr(lm["win_rate_vs_rte"] * 100, 0)} % de jours gagnés)</div></div>',
         unsafe_allow_html=True,
     )
-else:
+elif live is not None and not live.empty:
+    first = live["target_day"].min()
     k1.markdown(
-        '<div class="stat"><div class="v">—</div><div class="l">le premier jour live sera noté le surlendemain de la première prévision</div></div>',
+        f'<div class="stat"><div class="v">0 j</div><div class="l">notés en live pour l\'instant : la prévision du {date_fr(first).lower()} sera notée le lendemain, une fois la conso publiée</div></div>',
+        unsafe_allow_html=True,
+    )
+if live is not None and not live.empty:
+    k2.markdown(
+        f'<div class="stat"><div class="v">{live["target_day"].nunique()}</div><div class="l">prévision(s) émise(s) depuis la mise en production, modèle <code>{live["model_version"].iloc[-1]}</code></div></div>',
         unsafe_allow_html=True,
     )
 if drift:
